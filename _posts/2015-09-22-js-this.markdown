@@ -1,0 +1,155 @@
+---
+layout:     post
+title:      "我对 JavaScript this 的理解"
+subtitle:   "this 的本质，this 指向的规则及误解"
+date:       2018-03-18
+author:     "ZHR"
+header-img: "img/post-bg-js-version.jpg"
+tags:
+    - JavaScript
+    - this
+---
+
+## this 是什么
+
+> this 是一个很特别的关键字，它被自动定义在所有函数的作用域中。
+
+由于一些之前的知识，我知道 **this 本质是函数运行时函数上下文对象的引用**。所以当看到《你不知道的 JavaScript 上卷》74页中的这句话时，我先后读了很多次，感觉信息量很大，也感觉有点晦涩。
+
+**信息量很大**
+
+**JavaScript 采用词法作用域，词法作用域是在代码编写时就确定下来的。而上下文对象是函数运行时指定的。**一个静态概念，一个动态概念，JavaScript 的词法作用域和上下文对象是如何协同工作的？要解决这个疑问恐怕要去看下 JavaScript 引擎的源码是如何实现的了。
+
+**晦涩**
+
+没有更直白地说明 JavaScript 引擎什么时候将 this 定义在函数的词法作用域中。因此，我个人比较愿意将这句话修改成下边这样子：
+
+> 所有的函数在运行时，都会在其词法作用域内定义一个上下文对象。
+>
+> 函数内部使用 this 来引用上下文对象。
+
+运行时指定，我想这就是使用代词 this 的原因了吧。
+
+## this 指向规则
+
+> 函数的调用方式决定了 this 的指向。
+
+待续...
+
+## this 指向误解
+
+在 this 指向这个问题上容易出现两种理所当然的误解。一种是 this 指向函数自身，一种是 this 指向函数的词法作用域。
+
+### 指向函数自身
+
+在 JavaScript 中，从函数内部引用函数本身的常见原因有以下三种：
+
+- 递归
+- 写一个在第一次被调用后自己解除绑定的事件处理器
+- 调用函数时存储存储状态
+
+本质上 this 指代的是对象*（从功能性来说是上下文对象）*，JavaScript 中所有的函数都是对象。因此，从技术的角度而言，this 是可以指向自身的，但这必须考虑函数的调用方式。
+
+```javascript
+/***************代码清单1: this 不指向函数本身**************/
+function foo(num) {
+    this.count++; // 试图通过 this 引用函数自身来存储函数的状态。
+    console.log("foo: " + num);
+}
+foo.count = 0;
+
+var i = 0;
+for(i = 0; i < 10; i++) {
+    if (i > 5) {
+        // 这种调用方式使得 this 指向 window; 严格模式下指向 undefined;
+        // 但并不指向函数自身。
+        foo(i); 
+    }
+}
+// foo: 6
+// foo: 7
+// foo: 8
+// foo: 9
+
+console.log(foo.count);
+// 0
+console.log(count);
+// NaN
+```
+
+```javascript
+/***************代码清单2: call 强制 this 指向函数本身**************/
+function foo(num) {
+    this.count++; // 试图通过 this 引用函数自身来存储函数的状态。
+    console.log("foo: " + num);
+}
+foo.count = 0;
+
+var i = 0;
+for(i = 0; i < 10; i++) {
+    if (i > 5) {
+        // call 调用方式可以确保 this 指向函数自身。
+        foo.call(foo, i); 
+    }
+}
+// foo: 6
+// foo: 7
+// foo: 8
+// foo: 9
+
+console.log(foo.count);
+// 4
+console.log(count);
+// ReferenceError: Can't find variable: count
+```
+
+```javascript
+/***************代码清单3: 不使用 this 来引用函数本身**************/
+function foo() {
+    foo.count = 4; // 使用具名函数对象的词法标识符（变量）来引用自身。
+}
+
+setTimeout(function(){
+    // 匿名函数无法引用自身。
+    // arguments.callee 已经被弃用。
+}, 5000);
+```
+
+### 指向函数作用域
+
+需要明确的是，this 在任何情况下都不指向函数的作用域。作用域无法通过 JavaScript 代码访问，它存在于 JavaScript 引擎内部。
+
+```javascript
+function foo() {
+    var a = 2;
+    this.bar();
+}
+
+function bar() {
+    // 这行代码的输出是什么？是ReferenceError: a is not defined？还是 undefined?
+    console.log(this.a); 
+}
+
+foo();
+```
+
+## 疑惑
+
+> 当一个函数被调用时，会创建一个活动记录（有时候页称为执行上下文）。这个记录会包含函数在哪里被调用（调用栈），函数的调用方式，传入的参数等信息。this 就是这个记录的一个属性，会在函数执行过程中用到。
+
+《你不知道的 JavaScript 上卷》80页有这么一段文字。this 并不指向上下文，this 只是上下文的一个属性。这与《this 是什么》一节中说到的“this 是函数执行时函数上下文的引用”有些冲突。
+
+突然有种三观尽毁，天崩地裂的感觉@@
+
+我想可能只有更深入的研究，才会有更正确的认识吧。
+
+## 其他
+
+### 为什么使用 this
+
+方应杭在[《this 的值到底是什么？一次说清楚》](https://zhuanlan.zhihu.com/p/23804247)中说 ES5 中函数有三种调用方式，第三种才是正常的调用方式，而其他两种只不过是糖果。使用糖果的代码写起来看起来都比较优雅。
+
+## 参考文献
+
+* 《你不知道的 JavaScript 上卷》
+* [《this 的值到底是什么？一次说清楚》](https://zhuanlan.zhihu.com/p/23804247)
