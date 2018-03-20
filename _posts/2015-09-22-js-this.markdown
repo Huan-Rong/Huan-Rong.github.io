@@ -14,7 +14,7 @@ tags:
 
 > this 是一个很特别的关键字，它被自动定义在所有函数的作用域中。
 
-由于一些之前的知识，我知道 **this 本质是函数运行时函数上下文对象的引用**。所以当看到《你不知道的 JavaScript 上卷》74页中的这句话时，我先后读了很多次，感觉信息量很大，也感觉有点晦涩。
+由于一些之前的知识，我知道 **`this`本质是函数运行时函数上下文对象的引用**。所以当看到《你不知道的 JavaScript 上卷》74页中的这句话时，我先后读了很多次，感觉信息量很大，也感觉有点晦涩。
 
 **信息量很大**
 
@@ -22,23 +22,252 @@ tags:
 
 **晦涩**
 
-没有更直白地说明 JavaScript 引擎什么时候将 this 定义在函数的词法作用域中。因此，我个人比较愿意将这句话修改成下边这样子：
+没有更直白地说明 JavaScript 引擎什么时候将 `this` 定义在函数的词法作用域中。因此，我个人比较愿意将这句话修改成下边这样子：
 
 > 所有的函数在运行时，都会在其词法作用域内定义一个上下文对象。
 >
 > 函数内部使用 this 来引用上下文对象。
 
-运行时指定，我想这就是使用代词 this 的原因了吧。
+运行时指定，我想这就是使用代词 `this` 的原因了吧。
 
-## this 指向规则
+## this 的绑定规则
 
-> 函数的调用方式决定了 this 的指向。
+> 函数的调用方式决定了 `this` 的绑定对象。
 
-待续...
+`this` 的绑定规则有四条，依据优先级由低到高列出如下：
+
+* 独立函数调用（默认绑定）：`this` 绑定到 `window`; 严格模式下，`this` 绑定到 `undefined`。
+* 用上下文对象的方式调用函数（隐式绑定）：`this` 绑定到上下文对象。
+* 用 `call`，`apply`，`bind` 的方式调用函数（显示绑定）：`this` 绑定到指定的对象。
+* 用 `new` 运算符的方式调用函数：`this` 绑定到新创建的对象。
+
+要确定 `this` 的绑定对象，首先要先找到函数的调用位置，然后再分析函数的调用方式适用哪一条绑定规则。最简单的查看函数调用位置的方法可能是直接查看代码，但是某些编程模式可能会隐藏真正的调用位置。
+
+有一种更加直接的方式不仅仅可以查看函数的调用栈，同时也能帮助我们分析 `this` 的指向：浏览器开发者工具中的 Call Stack 和 Scope Chain。
+
+### 默认绑定
+
+```javascript
+/*************非严格模式下的独立函数调用*************/
+function foo() {
+    console.log(this.a); // 2。分析调用栈可知 this 绑定到 window。
+}
+var a = 2;
+foo();
+```
+
+```javascript
+/**************严格模式下的独立函数调用*************/
+"use strict";
+function foo() {
+    console.log(this.a); // TypeError: undefined is not an object
+}
+var a = 2;
+foo();
+```
+
+### 隐式绑定
+
+```javascript
+/***************隐式绑定***************/
+function foo() {
+    console.log(this.a);
+}
+
+var obj = {
+    a: 2,
+    foo: foo
+};
+
+obj.foo();// 当函数引用有上下文对象时，隐式绑定规则会把函数调用中的 this 绑定到这个上下文对象。
+```
+
+**隐式绑定丢失或更改：**这是一个非常常见的 `this` 绑定问题，即被隐式绑定的函数会丢失绑定对象（或者其绑定对象被修改），也就是说它会应用默认绑定规则。
+
+```javascript
+/**************隐式丢失**********/
+function foo() {
+    console.log(this.a);
+}
+var obj = {
+    a: 2,
+    foo: foo
+};
+var bar = obj.foo; // 函数别名
+var a = "oops, global"; // a 是全局对象的属性
+bar(); // "oops, global"
+```
+
+```javascript
+/*************回调函数中的隐式丢失**********/
+function foo() {
+    console.log(this.a);
+}
+
+function doFoo(fn) {
+    fn();
+}
+
+var obj = {
+    a: 2,
+    foo: foo
+};
+
+var a = "oops, global";
+doFoo(obj.foo); // "oops, global"
+```
+
+回调函数丢失 `this` 绑定是非常常见的。除此之外，还有一种情况 `this` 的行为会出乎我们意料：**调用回调函数的函数可能会修改 `this`**。在一些流行的 JavaScript 库中事件处理器常会把回调函数的 `this` 强制绑定到触发事件的 DOM  元素上。
+
+无论是哪种情况，`this` 的改变都是意想不到的，因为我们无法控制回调函数的执行方式。
+
+### 显式绑定
+
+隐式绑定需要在对象内部包含函数引用，但如果不想在对象内部包含函数引用，而想在某个对象上强制调用函数，我们可以使用函数的 `call` 和 `apply` 方法。这两种直接指定 this 的绑定对象的方式被称为显式绑定。
+
+```javascript
+/*************显式绑定***************/
+function foo() {
+    console.log(this.a);
+}
+
+var obj = {
+    a: 2
+}
+
+foo.call(obj); // 2
+```
+
+#### 硬绑定
+
+##### 显式实现 VS 隐式实现
+
+虽然显式绑定无法直接解决隐式绑定丢失或更改的问题，但是我们可以利用显式绑定的变种 — 硬绑定，来解决这个问题。
+
+```javascript
+/***************使用显式绑定的硬绑定变种来解决隐式绑定丢失或更改的问题**************/
+function foo() {
+    console.log(this.a);
+}
+
+var obj = {
+    a: 2
+}
+
+// 在包裹函数内部使用显示绑定，然后将该包裹函数对象的引用赋给变量 bar。
+var bar = function() {
+    foo.call(obj); 
+};
+
+bar(); // 2
+setTimeout(bar, 2000); // 2
+bar.call(window); // 2
+```
+
+其实，硬绑定并不是一种其他的 `this` 绑定规则，其本质是使用了一些代码上的套路（**模式**）。也就是说，隐式绑定也可以使用硬绑定模式来解决隐式丢失的问题。即硬绑定是一种模式，隐式绑定和显式绑定都可以使用这种模式来进行代码的实现。
+
+```javascript
+/****************使用隐式绑定的硬绑定变种来解决隐式绑定丢失或更改的问题***************/
+function foo() {
+    console.log(this.a);
+}
+
+var obj = {
+    a: 2,
+    foo: foo
+};
+
+var bar = function() {
+    obj.foo();
+}
+
+bar(); // 2
+setTimeout(bar, 2000); // 2
+bar.call(window); // 2
+```
+
+##### bind
+
+使用硬绑定来创建包裹函数是硬绑定常见的应用场景。**这是上述问题解决办法的本质。硬绑定的另一种使用方法是创建一个可以重复使用的辅助函数。
+
+```javascript
+/**************使用硬绑定来创建可重复使用的辅助函数**************/
+function foo(something) {
+    return this.a + something;
+}
+
+// 简单的辅助函数，作用是使用硬绑定来创建并返回包裹函数。这样就不必每次自己实现硬绑定模式了。
+function bind(fn, obj) {
+    // JavaScript 中所有的函数都是对象，既然函数可以作为实参传入，那么也可以作为结果返回。
+    return function() {
+        // 问：显式绑定实现的硬绑定模式要比隐式绑定实现的要优雅得多，因为在后者的实现中，函数始终需要上下文对象来调用？
+        fn.apply(obj, arguments); // 思考隐式方式的实现：obj[fn](arguments)? 
+    };
+}
+
+var obj = {
+    a: 2
+};
+
+var bar = bind(foo, obj);
+var b = bar(3);
+console.log(b);
+```
+
+由于*硬绑定*是一种非常常用的模式，所以 ES5 提供了内置的方法 `Function.prototype.bind`，`bind` 的作用与上一段代码类似，它会返回一个硬编码的函数，该函数运行时 `this` 指向 `bind` 的实参。
+
+```javascript
+/********************Function.prototype.bind 示例代码*****************/
+function foo(something) {
+    console.log(this.a + something);
+    return this.a + something;
+}
+
+var obj = {
+    a: 2
+};
+
+var bar = foo.bind(obj);
+var b = bar(3);
+console.log(b);
+```
+
+##### API 调用中的上下文
+
+第三方库的许多函数，以及 JavaScript 语言和宿主环境中许多新的内置函数，都提供了一个可选的参数，该参数通常被称为上下文`context`，其作用不言而喻。
+
+```javascript
+/********************Function.prototype.bind 示例代码*****************/
+function foo(something) {
+    console.log(this.a + something);
+    return this.a + something;
+}
+
+var obj = {
+    a: 2
+};
+
+var bar = foo.bind(obj);
+var b = bar(3);
+console.log(b);
+```
+
+### new 绑定
+
+`new` 绑定是 `this` 绑定规则的最后一条：使用 `new`操作符调用函数创建对象时，`this`指向新创建的对象。
+
+```javascript
+/******************new 绑定*****************/
+function foo(a) {
+    this.a = a;
+}
+var bar = new foo(2);
+console.dir(bar);
+```
 
 ## this 指向误解
 
-在 this 指向这个问题上容易出现两种理所当然的误解。一种是 this 指向函数自身，一种是 this 指向函数的词法作用域。
+在 `this` 指向这个问题上容易出现两种理所当然的误解。一种是 `this` 指向函数自身，一种是 `this` 指向函数的词法作用域。
 
 ### 指向函数自身
 
@@ -48,10 +277,10 @@ tags:
 - 写一个在第一次被调用后自己解除绑定的事件处理器
 - 调用函数时存储存储状态
 
-本质上 this 指代的是对象*（从功能性来说是上下文对象）*，JavaScript 中所有的函数都是对象。因此，从技术的角度而言，this 是可以指向自身的，但这必须考虑函数的调用方式。
+本质上 `this` 指代的是对象*（从功能性来说是上下文对象）*，JavaScript 中所有的函数都是对象。因此，从技术的角度而言，`this` 是可以指向自身的，但这必须考虑函数的调用方式。
 
 ```javascript
-/***************代码清单1: this 不指向函数本身**************/
+/***************this 不指向函数本身**************/
 function foo(num) {
     this.count++; // 试图通过 this 引用函数自身来存储函数的状态。
     console.log("foo: " + num);
@@ -78,7 +307,7 @@ console.log(count);
 ```
 
 ```javascript
-/***************代码清单2: call 强制 this 指向函数本身**************/
+/***************call 强制 this 指向函数本身**************/
 function foo(num) {
     this.count++; // 试图通过 this 引用函数自身来存储函数的状态。
     console.log("foo: " + num);
@@ -104,7 +333,7 @@ console.log(count);
 ```
 
 ```javascript
-/***************代码清单3: 不使用 this 来引用函数本身**************/
+/***************不使用 this 来引用函数本身**************/
 function foo() {
     foo.count = 4; // 使用具名函数对象的词法标识符（变量）来引用自身。
 }
@@ -117,7 +346,7 @@ setTimeout(function(){
 
 ### 指向函数作用域
 
-需要明确的是，this 在任何情况下都不指向函数的作用域。作用域无法通过 JavaScript 代码访问，它存在于 JavaScript 引擎内部。
+需要明确的是，`this` 在任何情况下都不指向函数的作用域。**作用域无法通过 JavaScript 代码访问，它存在于 JavaScript 引擎内部。**
 
 ```javascript
 function foo() {
@@ -135,9 +364,9 @@ foo();
 
 ## 疑惑
 
-> 当一个函数被调用时，会创建一个活动记录（有时候页称为执行上下文）。这个记录会包含函数在哪里被调用（调用栈），函数的调用方式，传入的参数等信息。this 就是这个记录的一个属性，会在函数执行过程中用到。
+> 当一个函数被调用时，会创建一个活动记录（有时候页称为执行上下文）。这个记录会包含函数在哪里被调用（调用栈），函数的调用方式，传入的参数等信息。`this` 就是这个记录的一个属性，会在函数执行过程中用到。
 
-《你不知道的 JavaScript 上卷》80页有这么一段文字。this 并不指向上下文，this 只是上下文的一个属性。这与《this 是什么》一节中说到的“this 是函数执行时函数上下文的引用”有些冲突。
+《你不知道的 JavaScript 上卷》80页有这么一段文字。`this` 并不指向上下文，`this` 只是上下文的一个属性。这与《this 是什么》一节中说到的“`this` 是函数执行时函数上下文的引用”有些冲突。
 
 突然有种三观尽毁，天崩地裂的感觉@@
 
