@@ -1,0 +1,27 @@
+---
+layout:     post
+title:      "CSAPP 的学习方法"
+subtitle:   "总结《深入理解计算机系统》的学习方法"
+date:       2018-03-21
+author:     "ZHR"
+header-img: "img/csapp.jpg"
+tags:
+    - CS:APP
+    - 深入理解计算机系统
+---
+
+## 学习材料
+
+* CSAPP 英文版/中文版
+* 15213 课程视频：课程官网，B站，youTube
+* 15213 Lab
+* NJU 袁春风：计算机系统基础及 MOOC 课程
+
+## 学习方法
+
+* 看视频
+* Lab 和练习题
+* CSAPP 书籍和其他书籍
+* XMIND 和笔记
+* 知乎，Google
+* 找大牛
