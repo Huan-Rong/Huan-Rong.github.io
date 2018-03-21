@@ -33,7 +33,7 @@ tags:
 
 * 编译系统由预处理器、编译器、汇编器和链接器组成，它们对应着整个编译过程的四个阶段：预处理阶段、编译阶段、汇编阶段和链接阶段。（P3）从下图可以看出，源程序被其他程序翻译成不同的格式。
 
-![compilation system](../img/in-post/compilation-system.jpg)
+![compilation system](/img/in-post/compilation-system.jpg)
 
 * 了解编译系统如何工作是大有益处的。（P4：这一部分属于 CSAPP 的脉络）
   * 优化程序性能
