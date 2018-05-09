@@ -120,7 +120,63 @@ shell> mysql -h host -u root -ppassword menagerie
 
 `select database();` 用于查看正在使用的数据库。
 
+## 创建表
 
+### show tables
+
+`show tables` 用于查看正在使用的数据库中已有的表。
+
+![show-tables](/img/in-post/show-tables.jpg)
+
+### create table
+
+```sql
+mysql> CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20), 
+    -> species VARCHAR(20), sex CHAR(1), birth DATE, death DATE);
+```
+
+`varchar` 类型的字段必须指定长度，否则建表语句执行将会报错；长度的取值范围是 [1, 65535]。
+
+![create-table](/img/in-post/create-table.jpg)
+
+### describe table
+
+`describe` 可以用于查看表结构。我们可以随时使用这条语句，或是创建表之后核对表结构的时候，或是忘记表字段名的时候。
+
+![describe-table](/img/in-post/describe-table.jpg)
+
+## Loading Data into a Table
+
+对于一个刚创建的表，目前有两种方式向该表插入数据。一种是使用 `load data`，另一种是使用 `insert`。
+
+### load data
+
+`load data` 是一种批量插入记录的方法，事先将数据按照某种格式保存在一个文件中（譬如 `pet.txt`），然后使用 `load data`将文件的数据插入到表中。下图是 `pet.txt `文件的内容，其中 `\N` 表示字段值为 `NULL`，值的顺序应当与 `CREATE TABLE` 时的顺序一致。
+
+![cat pet.txt](/img/in-post/cat-pet.jpg)
+
+`load data` 可以指定 `pet.txt` 文件中的数据格式，比如换行使用 `\r\n` 、`\r`  或 `\n`，值之间的分隔符使用 `,`。
+
+```sql
+mysql> LOAD DATA LOCAL INFILE '/path/pet.txt' INTO TABLE pet
+    -> FIELDS TERMINATED BY ',';
+```
+
+
+
+![load data local infile](/img/in-post/load-data-local-infile.jpg)
+
+### insert
+
+```sql
+mysql> INSERT INTO pet VALUES('Pullball', 'Diane', 'Hamster', 'f', '1999-03-30', NULL);
+```
+
+值的顺序应当与 `CREATE TABLE` 时的顺序一致。
+
+## 其他
+
+* 在表中记录的是出生日期而不是年龄的原因是，年龄是随着时间变化的，如果将年龄记录在表中，则必须经常更新表。因此，更好的做法是在库里记录一个固定的值。
 
 
 
