@@ -174,13 +174,146 @@ mysql> INSERT INTO pet VALUES('Pullball', 'Diane', 'Hamster', 'f', '1999-03-30',
 
 值的顺序应当与 `CREATE TABLE` 时的顺序一致。
 
+## Retieving Information from a Table
+
+### 排序
+
+* 可以对多个列同时进行排序操作，并且不同的列可以采取不同的排序策略（升序或降序）。
+* 默认的排序策略是升序。
+* 降序所使用的关键字是 `DESC`。`DESC` 只会对距离它最近的前一个列起作用，比如 `ORDER BY name, birth DESC`，`name` 列采用默认升序策略，`birth` 列采用降序策略。
+* 对字符类型的列进行排序时，和所有其他的字符串比较所采用的策略一样：大小写不敏感。也就是说，对字符串 `BOWSER` 和 `bowser` 进行排序的话，这二者是不存在先后顺序的。如果非得使用大小写敏感的排序策略，那么可以使用 `binary`，比如 `ORDER BY BINARY name`。
+
+### 更新
+
+- 关于 `UPDATE` 的一个最佳实践是与 `SELECT` 有关的。在 `UPDATE` 之前，先使用 `SELECT` 查询一下有哪些行，这样可以避免 `WHERE` 子句编写错误而造成的错误。
+
+### 选择 Selection
+
+- 字符串比较是大小写不敏感的。比如，`WHERE name='BOWSER'` 和 `WHERE name='bowser'` 的结果是一样的。
+- `AND` 的优先级高于 `OR`。
+- 通过 `WHERE death IS NOT NULL` 来判断某一个列的值是否为 `NULL`，而不是使用 `WHERE death <> NULL`。
+
+### 日期计算
+
+MySQL 提供了一些函数来完成处理日期类型的工作，比如计算年龄、抽取日期的某一部分。
+
+#### TIMESTAMPDIFF 函数
+
+通过 `TIMESTAMPDIFF` 函数可以计算两个日期之间的差。下面的语句计算的是宠物年龄。
+
+```sql
+mysql> SELECT name, birth, CURDATE(),
+    ->        TIMESTAMPDIFF(year, birth, CURDATE()) AS age
+    -> FROM pet;
+```
+
+![timestampdiff-function](/img/in-post/timestampdiff-function.jpg)
+
+#### YEAR/MONTH/DAYOFMONTH 函数
+
+`YEAR`，`MONTH`，`DAYOFMONTH` 是 MySQL 提供的用于抽取日期某一部分的三个函数。下面语句查询出下一个月生日的宠物。
+
+```sql
+mysql> SELECT name, birth, CURDATE()
+    -> FROM pet
+    -> WHERE MONTH(birth) = MONTH(CURDATE()) + 1;
+```
+
+#### DATE_ADD 函数	
+
+上面的语句是有问题的，如果当月是 12 月份，那么 `MONTH(CURDATE())+1` 的结果是 13。我们可以使用 `DATE_ADD` 函数来解决这个问题。`DATE_ADD` 函数用于对一个日期加上一个时间间隔。
+
+```sql
+mysql> SELECT name, birth
+    -> FROM pet
+    -> WHERE MONTH(birth) = MONTH(DATE_ADD(CURDATE(), INTERVAL 1 MONTH));
+```
+
+对于这个问题，还有一种解决的方法，即使用 `MOD` 模运算。
+
+```sql
+mysql> SELECT name, birth
+    -> FROM pet
+    -> WHERE MONTH(birth) = MOD(MONTH(CURDATE()), 12) + 1;
+```
+
+### NULL 值的处理
+
+`NULL` 意味着 *a missing unknown value*，它与其他值的处理有些不同。
+
+#### IS NULL 和 IS NOT NULL 运算符
+
+判断是否为 `NULL`，只能使用 `IS NULL` 或 `IS NOT NULL` 运算符，而不能使用 `=`、`>` 等算术运算符。因为任何与 `NULL` 的算术运算的结果都是 `NULL`。
+
+```sql
+mysql> SELECT 1 <> NULL, NULL<> NULL, NULL = NULL, NULL IS NULL, NULL IS NOT NULL;
+```
+
+#### MySQL 中的真假值
+
+在 MySQL 中，`0` 和 `NULL` 表示假，而其他任何值表示真。布尔运算结果默认使用  `1` 来表示真值。
+
+#### GROUP BY 中的 NULL
+
+在 GROUP BY 子句中，NULL 被认为是“相等”的。也就是说，所有值为 `NULL` 的记录会被分到同一组。
+
+```sql
+mysql> SELECT death, count(*) FROM pet GROUP BY death;
+```
+
+![null in group by](/img/in-post/null-in-group-by.jpg)
+
+#### ORDER BY 中的 NULL
+
+当使用 `ORDER BY ... ASC`，`NULL` 的记录会出现最前面；当使用 `ORDER BY ... DESC`，`NULL` 的记录会出现最后面；
+
+![null in order by](/img/in-post/null-in-order-by.jpg)
+
+### 模式匹配
+
+MySQL 提供了两种模式匹配。一种是基于标准 SQL 的模式匹配，另一种则是基于扩展的正则表达式（类似 Unix  sed/grep 等工具用到的正则表达式）的模式匹配。
+
+在这两种模式匹配中，字符都是大小写不敏感的。如果要进行大小写敏感的模式匹配，加上关键字 `BINARY`。
+
+#### 标准的 SQL 模式匹配
+
+默认情况下，在 SQL 模式匹配中，字符是大小写不敏感的，并且不能使用 `<>` 或 `=` 作为运算符，使用 `LIKE` 或 `NOT LIKE` 来代替。
+
+* `_` 来表示任意单个字符。
+* `%` 表示任意个字符，包括 0 个。
+
+#### 基于扩展的正则表达式的模式匹配
+
+这种类型的模式匹配使用的运算符是 `REGEXP`/`NOT REGEXP`（或`RLIKE`/`NOT RLIKE`），而不是 `LIKE` 或 `NOT LIKE` 。
+
+* `.` 表示任意单个字符。
+* `[]` 表示一个组，用于匹配组中其中一个字符。
+* `{n}` 表示出现的次数。
+* `*` 放在一个组或者一个字符后面，表示任意数量的字符，包括 0 个。
+  * `x*` 表示任意数量个 `x`。
+  * `[0-9]*` 表示任意数量个数字。
+    * `.*` 表示任意数量的任意字符。
+  * `^` 表示匹配开头。
+  * `$` 表示匹配结尾。
+
+### MySQL 中的 GROUP BY
+
+#### ONLY_FULL_GROUP_BY
+
+当 `sql_mode='ONLY_FULL_GROUP_BY'` 时，语句 `SELECT owner, COUNT(*) FROM pet;` 将会执行报错。
+
+当 `sql_mode=''` 时，语句 `SELECT owner, COUNT(*) FROM pet;` 将会正确执行。这个时候所有的记录会被当作一个单独的分组来处理。
+
+### Using More than one Table
+
+[on 和 where 之间的比较](https://stackoverflow.com/questions/2722795/in-sql-mysql-what-is-the-difference-between-on-and-where-in-a-join-statem)
+
+* The `ON` clause defines the relationship between the tables.
+* The `WHERE` clause describes which rows you are interested in.
+
 ## 其他
 
 * 在表中记录的是出生日期而不是年龄的原因是，年龄是随着时间变化的，如果将年龄记录在表中，则必须经常更新表。因此，更好的做法是在库里记录一个固定的值。
-
-
-
-
 
 
 
