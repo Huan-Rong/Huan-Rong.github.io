@@ -311,21 +311,36 @@ MySQL 提供了两种模式匹配。一种是基于标准 SQL 的模式匹配，
 * The `ON` clause defines the relationship between the tables.
 * The `WHERE` clause describes which rows you are interested in.
 
+## Getting Information About Databases and Tables
+
+`SHOW DATABASES` 查看 MySQL Server 管理的数据库。
+
+`SELECT DATABASE();` 查看当前使用的数据库。
+
+`SHOW TABLES;` 查看当前数据库已存在的表。
+
+`DESCRIBE tbl_name;` 查看某张表的结构。
+
+* `Field` 表示列名。
+
+* `Type` 表示数据类型。
+
+* `Null` 表示是否可以为空。
+
+* `Key` 表示存在索引。
+
+* `Default` 表示默认值。
+
+* `Extra` 表示一些特殊信息。如果某一列创建时使用了 `AUTO_INCREMENT` 选项，那么在 `Extra` 这列上将会显示 `auto_increment`。
+
+  ![desc pet](/img/in-post/desc-pet.jpg)
+
+`SHOW CREATE TABLE tbl_name;` 查看某张表的建表语句。
+
+![show create table pet](/img/in-post/show-create-table-pet.jpg)
+
+`SHOW INDEX FROM tbl_name;` 查看某张表的索引信息。 
+
 ## 其他
 
 * 在表中记录的是出生日期而不是年龄的原因是，年龄是随着时间变化的，如果将年龄记录在表中，则必须经常更新表。因此，更好的做法是在库里记录一个固定的值。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
