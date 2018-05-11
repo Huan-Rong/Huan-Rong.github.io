@@ -296,6 +296,12 @@ MySQL 提供了两种模式匹配。一种是基于标准 SQL 的模式匹配，
   * `^` 表示匹配开头。
   * `$` 表示匹配结尾。
 
+#### PK
+
+标准的 SQL 模式匹配和基于扩展的正则表达式的模式匹配有一个非常重要的区别。标准 SQL 模式匹配时，整个字符串都必须与模式完全匹配，这样才是匹配成功。基于扩展的正则表达式的模式匹配时，只要字符串的某一子串与模式匹配就算匹配成功。
+
+![rlike pk like](/img/in-post/rlike-pk-like.jpg)
+
 ### MySQL 中的 GROUP BY
 
 #### ONLY_FULL_GROUP_BY
@@ -340,6 +346,46 @@ MySQL 提供了两种模式匹配。一种是基于标准 SQL 的模式匹配，
 ![show create table pet](/img/in-post/show-create-table-pet.jpg)
 
 `SHOW INDEX FROM tbl_name;` 查看某张表的索引信息。 
+
+## Using mysql in Batch Mode
+
+*mysql client* 有两种使用模式，一种是交互模式，另一种是批处理模式。批处理模式需要实现将要执行的语句写在一个脚本文件里，然后让 *mysql client* 去执行这个文件的内容。
+
+### 当 mysql client 未连接到 MySQL Server
+
+当还没有连接到 *MySQL Server* 时，使用类似于下边的命令来让 *mysql client* 进行批处理操作。
+
+```shell
+shell> mysql db_name -h host -u user -p < batch_file
+```
+
+当脚本的执行有输出结果时，批处理模式得到的结果比交互模式得到的结果在格式上要简单得多。如果希望使用交互模式的格式化结果，可以在批处理时使用 `-t` 选项。
+
+```shell
+shell> mysql db_name -h host -u user -p < batch_file -t
+```
+
+如果希望将批处理的结果保存在文件中或者使用 Unix more 工具来查看，这就需要用到重定向或者管道了。
+
+```shell
+shell> mysql db_name -h host -u user -p < batch_file > batch.out
+shell> mysql db_name -h host -u user -p < batch_file | more
+```
+
+如果希望在执行脚本文件时把脚本的内容顺便打印出来，那么需要使用 `-v` 选项。
+
+```shell
+shell> mysql db_name -h host -u user -p < batch_file > batch.out -t -v
+```
+
+### 当 mysql client 连接到 MySQL Server
+
+当 *mysql client* 已经连接到 *MySQL Server* 时，则可以使用 `source` 或 `\.` 命令来进行批处理。这实际上是在交互模式中使用批处理模式。
+
+```mysql
+mysql> source filename
+mysql> \. filename
+```
 
 ## 其他
 
