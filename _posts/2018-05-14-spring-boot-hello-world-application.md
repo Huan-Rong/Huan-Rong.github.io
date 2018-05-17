@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      "Spring Boot 基础教程"
-subtitle:   "官方文档第 11 章总结"
+title:      "Spring Boot: Hello World Application"
+subtitle:   "官方文档第 11 章总结：Developing Your First Spring Boot Application"
 date:       2018-05-14
 author:     "ZHR"
 header-img: "img/spring-boot.png"
@@ -131,6 +131,8 @@ public class Example {
 
 `@EnableAutoConfiguration` 注解会让 Spring Boot 依据 *pom.xml*  文件中配置的依赖去配置 Spring。在本文中，我们添加了 `spring-boot-starter-web` 依赖，因此，自动配置机制 （the auto-configuration）会认为我们正在开发一个 web 应用，并以此来配置 Spring。
 
+[自动配置是基于类路径中的 Jar 和 Bean 的定义方式的。](https://www.ibm.com/developerworks/cn/java/j-spring-boot-basics-perry/index.html)
+
 ##### main 方法
 
 这只是一个符合 Java 标准规范的方法，用作整个程序的入口。具体的执行委托给了 Spring Boot 的 `SpringApplication` 类的 `run`  方法。`SpringApplication` 将会引导启动整个应用。
@@ -153,9 +155,9 @@ public class Example {
 
 Java 没有提供加载嵌套 *jar* 文件的标准方法。所谓的嵌套 *jar* 文件，是指一个 *jar* 文件包含在另一个 *jar*  文件中。如果要发布一个自包含的应用程序，这可能会有问题。
 
-为了解决这个问题，许多开发人员使用 *uber jar*。一个 *uber jar* 会将应用程序所有依赖的所有类都打包成一个归档文件。这种方法的问题在于，很难看到应用程序中有哪些库。并且，如果在多个 *jar* 中使用相同的文件名(但使用不同的内容)，也会有问题。
+为了解决这个问题，许多开发人员使用 *Uber JAR*。一个 *Uber JAR* 会将应用程序所有依赖的所有类都打包成一个归档文件。这种方法的问题在于，很难看到应用程序中有哪些库。并且，如果在多个 *jar* 中使用相同的文件名(但使用不同的内容)，也会有问题。
 
-Spring Boot 采用了一种不同的方法，我们可以直接嵌套 *jar*。
+Spring Boot 定义了[一种特殊的 JAR 文件布局](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#executable-jar)来解决这个问题。Spring Boot 提供了工具来生成这样的可执行 JAR，在运行这个可执行 JAR 时，Spring Boot 也会使用一种特殊的类加载器来处理 JAR 中的类。
 
 为了创建一个可执行的 *jar*，我们需要将 `spring-boot-maven-plugin` 添加到 *pom.xml* 文件中。具体的做法是先将下面的配置添加到 *pom.xml* 文件的 `dependencies` 节点之后：
 
