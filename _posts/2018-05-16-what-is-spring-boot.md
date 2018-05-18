@@ -29,7 +29,7 @@ Spring Boot 的项目主页是：[http://projects.spring.io/spring-boot/](http:/
 
 ## Starters
 
-> 关于 SKtarter 的更多介绍参考 [Spring Boot Starters](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#using-boot-starter)。
+> 关于 Starter 的更多介绍参考 [Spring Boot Starters](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#using-boot-starter)。
 
 Starter 其本质是一组依赖，用于减少需要手动配置依赖的数量。比如，如果需要使用 Spring 和 JPA，那么我们添加一个 `spring-boot-starter-data-jpa` starter 即可。
 
