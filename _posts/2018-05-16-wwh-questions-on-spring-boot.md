@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Spring Boot: WWH questions on Spring Boot?"
+title:      "Spring Boot: WWH Questions on Spring Boot?"
 subtitle:   "回答 Spring Boot 的 WWH 问题，并解释 Spring Boot 中的一些概念。"
 date:       2018-05-16
 author:     "ZHR"

@@ -16,7 +16,8 @@ tags:
 
 ### The Basics
 
-[What is Spring Boot](http://www.bulibucai.site/2018/05/16/what-is-spring-boot/)
+[WWH Questions on Spring Boot](http://www.bulibucai.site/2018/05/16/what-is-spring-boot/)
 
 [Spring Boot Hello Wolrd Apllication](http://www.bulibucai.site/2018/05/14/spring-boot-hello-world-application/)
 
+[How to Use Spring Boot](http://www.bulibucai.site/2018/05/21/how-to-use-spring-boot/)
