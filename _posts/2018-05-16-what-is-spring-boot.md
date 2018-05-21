@@ -35,6 +35,8 @@ Starter 其本质是一组依赖，用于减少需要手动配置依赖的数量
 
 Spring Boot 内置的 Starter 的名字都遵循 `spring-boot-starter-*`  模式，`*`  代表应用的类型。Starter 所包含的依赖都是特定类型的应用所独有的。
 
+需要稍微提一下的是，Spring Boot 从功能的角度对 Starter 进行了分类：application starters, production starters, technical starters。
+
 ## Spring Boot 可执行 JAR PK Uber JAR
 
 ### Uber JAR
