@@ -22,5 +22,5 @@ tags:
 
 [How to Use Spring Boot](http://www.bulibucai.site/2018/05/21/how-to-use-spring-boot/)
 
-[The Exexcutable Jar Format](http://www.bulibucai.site/2018/05/22/the-executable-jar-format/)
+[The Executable Jar Format](http://www.bulibucai.site/2018/05/22/the-executable-jar-format/)
 
